@@ -1,0 +1,45 @@
+name: "Concept Documentation"
+description: "Document a C++ concept, language feature, or pattern encountered in this material."
+labels: ["documentation"]
+body:
+  - type: input
+    id: concept
+    attributes:
+      label: "Concept or Feature"
+      description: "Name the concept concisely."
+      placeholder: "e.g., stack vs. heap allocation, operator overloading, RAII"
+    validations:
+      required: true
+
+  - type: input
+    id: location
+    attributes:
+      label: "Where Encountered"
+      description: "File, chapter, or exercise where this came up."
+      placeholder: "e.g., Chapter 4 exercises, src/pointers_demo.cpp"
+    validations:
+      required: true
+
+  - type: textarea
+    id: description
+    attributes:
+      label: "Description"
+      description: "Explain the concept in your own words. Precision matters more than length."
+    validations:
+      required: true
+
+  - type: textarea
+    id: relevance
+    attributes:
+      label: "Relevance to CV / Robotics"
+      description: "Why does this concept matter in the context of computer vision, ROS2, or robotics systems? Leave blank if not yet clear."
+    validations:
+      required: false
+
+  - type: textarea
+    id: references
+    attributes:
+      label: "References"
+      description: "Links, book sections, or cppreference pages consulted."
+    validations:
+      required: false

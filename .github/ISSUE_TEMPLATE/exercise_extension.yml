@@ -1,0 +1,40 @@
+name: "Exercise Extension"
+description: "Propose an extension or variation of a textbook exercise to deepen understanding."
+labels: ["enhancement"]
+body:
+  - type: input
+    id: source_exercise
+    attributes:
+      label: "Source Exercise"
+      description: "Which exercise or file is this extending?"
+      placeholder: "e.g., Chapter 5, Exercise 3 — src/score_counter.cpp"
+    validations:
+      required: true
+
+  - type: textarea
+    id: extension_description
+    attributes:
+      label: "Proposed Extension"
+      description: "Describe what you will add or change. Be concrete about new behavior or constraints."
+    validations:
+      required: true
+
+  - type: dropdown
+    id: complexity
+    attributes:
+      label: "Estimated Complexity"
+      options:
+        - "Trivial (< 1 hour)"
+        - "Minor (1–3 hours)"
+        - "Moderate (half day)"
+        - "Substantial (multi-day)"
+    validations:
+      required: true
+
+  - type: textarea
+    id: target_concepts
+    attributes:
+      label: "Target Concepts"
+      description: "Which C++ concepts or patterns will this exercise reinforce?"
+    validations:
+      required: false

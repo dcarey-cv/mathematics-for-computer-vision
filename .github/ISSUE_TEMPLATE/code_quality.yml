@@ -1,0 +1,49 @@
+name: "Code Quality / Refactor"
+description: "Flag a section of code for style, correctness, efficiency, or idiomatic C++ improvement."
+labels: ["refactor"]
+body:
+  - type: input
+    id: location
+    attributes:
+      label: "File and Line(s)"
+      description: "Which file and approximate line range does this apply to?"
+      placeholder: "e.g., src/word_jumble.cpp:42-58"
+    validations:
+      required: true
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: "What is the problem?"
+      description: "Describe what is wrong or suboptimal. Be specific — quote the code if helpful."
+    validations:
+      required: true
+
+  - type: dropdown
+    id: category
+    attributes:
+      label: "Category"
+      options:
+        - "Correctness (produces wrong output or undefined behavior)"
+        - "Style (violates C++ conventions or readability norms)"
+        - "Efficiency (unnecessary allocations, copies, or complexity)"
+        - "Idiomatic C++ (should use a standard library feature or modern C++ pattern)"
+        - "Other"
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposed_fix
+    attributes:
+      label: "Proposed Fix"
+      description: "How do you intend to address this? Even a rough description is fine."
+    validations:
+      required: true
+
+  - type: textarea
+    id: learned
+    attributes:
+      label: "What does this teach?"
+      description: "One or two sentences on the underlying concept this fix reinforces."
+    validations:
+      required: false
