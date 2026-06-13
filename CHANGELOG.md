@@ -16,4 +16,4 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 #### Added
 - 'gaussianElimination()' function which automates the Gaussian Elimination algorithm over dynamically-sized, pivot-ordered matrices
-  - this algorithm is compared to the `Eigen` inbuilt 
+  - this algorithm is compared to the `Eigen` inbuilt solve function
