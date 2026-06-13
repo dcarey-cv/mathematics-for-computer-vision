@@ -13,6 +13,7 @@ MATRICES AND GAUSSIAN ELIMINATION
 Eigen::IOFormat eigFmt(Eigen::StreamPrecision, 0, ", ", "\n", "[", "]", "", "", ' ');
 
 void gaussianElimination(Eigen::MatrixXd matrix);
+void gaussElimComparison(const Eigen::MatrixXd& matrix);
 
 int main()
 {
@@ -24,22 +25,18 @@ int main()
   std::vector<char> variables;
 
   // My algorithm
+    // Precondition: matrix rows must be pivot-ordered
+    // (no pivot appears beneath a zero in its column)
+    // since no internal row sorting is performed.
   gaussianElimination(matrix);
 
   // vs. `Eigen::` solution
-  Eigen::Matrix3d A = matrix.leftCols(matrix.rows() - 1); // Pulls LHS matrix from my oiginal matrix
-  Eigen::Vector3d b = matrix.col(matrix.rows() - 1); // Pulls RHS solution vector from my original matrix
-  Eigen::Vector3d eigenSolution = A.lu().solve(b); // Computes the LU decomposition then solves `Ax = b`
-  // Alternatively, the above could be written as one line: Eigen::Vector3d eigenSolution = matrix.leftCols(3).lu().solve(matrix.col(3));
-
-  fmt::print("\nComparing...\nEigen library solution:\nu={}, v={}, w={}\n\n", eigenSolution(0), eigenSolution(1), eigenSolution(2));
+  gaussElimComparison(matrix);
 
   return 0;
 }
 
-// Precondition: matrix rows must be pivot-ordered
-// (no pivot appears beneath a zero in its column)
-// since no internal row sorting is performed.
+
 void gaussianElimination(Eigen::MatrixXd matrix)
 {
   fmt::print("\nBefore elimination:\n{}\nNote: final column represents RHS\n\n", fmt::streamed(matrix.format(eigFmt)));
@@ -76,4 +73,18 @@ void gaussianElimination(Eigen::MatrixXd matrix)
   }
 
   fmt::print("\n\nBack-substituting...\nu={}, v={}, w={}\n", solution(0), solution(1), solution(2));
+}
+
+void gaussElimComparison(const Eigen::MatrixXd& matrix)
+{
+  int n = matrix.cols() - 1;
+    // Alternatively: int n = matrix.rows()
+
+  Eigen::MatrixXd A = matrix.leftCols(n);
+  Eigen::VectorXd b = matrix.col(n);
+  Eigen::VectorXd eigenSolution = A.lu().solve(b);
+    // Alternatively, the above could be written as one line:
+    // Eigen::Vector3d eigenSolution = matrix.leftCols(3).lu().solve(matrix.col(3));
+  
+  fmt::print("\nComparing...\nEigen library solution:\nu={}, v={}, w={}\n\n", eigenSolution(0), eigenSolution(1), eigenSolution(2));
 }
