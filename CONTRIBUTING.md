@@ -1,12 +1,12 @@
 # Contributing
 
-This document describes the self-review workflow used throughout this repository.
+This document describes the self-review workflow used throughout this repository. As this repo is targetted towards self-improvement, external contributions are unlikely to be included. That said -- discussion, recommendations, questions, etcetera are all welcome so long as they flow through the proper channels.
 
 ---
 
 ## Guiding Philosophy
 
-Each domain in the curriculum produces implementations, derivations, or algorithm prototypes. This workflow exists to ensure every meaningful piece of work is preceded by a written intent, reviewed against a checklist, and logged — not to simulate a team environment, but to produce a legible, honest record of growth.
+Each domain in the curriculum produces implementations, derivations, or algorithm prototypes. Most contributions in this repo are algorithms which are first created manually and then compared to common library implementations. This strategy aims to provide me, dcarey-cv, with a deeper understanding of the mathematical foundations of computer vision, as well as their associated computational overhead under the hood.
 
 ---
 
@@ -39,7 +39,7 @@ Examples:
 
 ## Pull Request Protocol
 
-Every change goes through a PR. PRs are self-merged after confirming the checklist in the PR template is complete.
+Every change goes through a PR, which are then reviewed and merged by the author, dcarey-cv, after confirming the checklist in the PR template is complete.
 
 ---
 
