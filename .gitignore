@@ -3,3 +3,7 @@
 *.out
 *.o
 *.obj
+
+# CMake build artifacts
+build/
+__cmake_systeminformation/
