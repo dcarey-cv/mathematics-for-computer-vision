@@ -1,5 +1,5 @@
 add_library(strang_deps INTERFACE)
-target_include_directories(strang_deps INTERFACE ${EIGEN3_INCLUDE_DIR})
+target_link_libraries(strang_deps INTERFACE Eigen3::Eigen)
 target_link_libraries(strang_deps INTERFACE fmt::fmt)
 
 if(STRICT_WARNINGS)

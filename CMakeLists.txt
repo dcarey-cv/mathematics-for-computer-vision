@@ -6,6 +6,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 find_package(fmt REQUIRED)
+find_package(Eigen3 REQUIRED)
 
 include(FetchContent)
 FetchContent_Declare(
@@ -14,8 +15,6 @@ FetchContent_Declare(
   GIT_TAG v0.9.1
 )
 FetchContent_MakeAvailable(pangolin)
-
-set(EIGEN3_INCLUDE_DIR "C:/_PERSONAL/Workspace/Tools/Libraries/eigen-5.0.0")
 
 option(STRICT_WARNINGS "Enable -Wall -Wextra -Werror -Wpedantic" ON)
 

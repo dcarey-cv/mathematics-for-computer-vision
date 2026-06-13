@@ -7,3 +7,6 @@
 # CMake build artifacts
 build/
 __cmake_systeminformation/
+
+# Local user presets (may contain machine-specific paths)
+CMakeUserPresets.json
