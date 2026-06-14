@@ -18,4 +18,4 @@ FetchContent_MakeAvailable(pangolin)
 
 option(STRICT_WARNINGS "Enable -Wall -Wextra -Werror -Wpedantic" ON)
 
-add_subdirectory(strang-lingear-algebra)
+add_subdirectory(strang-linear-algebra)
