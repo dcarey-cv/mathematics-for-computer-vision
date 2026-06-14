@@ -33,6 +33,8 @@ Eigen::MatrixXd reconstructD(const ElimResult& result);
 Eigen::MatrixXd reconstructU(const ElimResult& result);
 bool gaussElimComparison(const Eigen::MatrixXd& matrix, const ElimResult& result, const std::vector<std::string>& originalVars);
 
+const double tolerance = 1e-9;
+
 int main()
 {
   // Example from Strang Chapter 1.3, page 13
@@ -81,14 +83,13 @@ int main()
   return 0;
 }
 
-
 ElimResult gaussianElimination(Eigen::MatrixXd matrix, std::vector<std::string> variables)
 {
   int n = matrix.rows();
 
   if (static_cast<int>(variables.size()) != n)
   {
-    fmt::print("Error: {} variable names provided but matrix has {} rows\n", variables.size(), n);
+    fmt::print("ERROR: {} variable names were provided, but the matrix has {} rows\n", variables.size(), n);
     return { {}, {}, {}, {}, {}, false };
   }
 
@@ -98,6 +99,12 @@ ElimResult gaussianElimination(Eigen::MatrixXd matrix, std::vector<std::string> 
   for (int col = 0; col < n - 1; ++col)
   {
     partialPivot(matrix, col, permutations, variables);
+
+    if (std::abs(matrix(col, col)) < tolerance)
+    {
+      fmt::print("ERROR: singular matrix detected at pivot {}\n", col);
+      return { {}, {}, {}, {}, {}, false };
+    }
 
     for (int row = col + 1; row < n; ++row)
     {
@@ -110,6 +117,8 @@ ElimResult gaussianElimination(Eigen::MatrixXd matrix, std::vector<std::string> 
   Eigen::VectorXd solution(n);
   for (int idx = n - 1; idx >= 0; --idx)
   {
+    if (std::abs(matrix(idx, idx)) < tolerance) { solution(idx) = 0; continue; }
+    
     solution(idx) = matrix(idx, n);
     for (int j = idx + 1; j < n; ++j)
     {
@@ -184,7 +193,6 @@ Eigen::MatrixXd reconstructU(const ElimResult& result)
   return Uunit;
 }
 
-
 bool gaussElimComparison(const Eigen::MatrixXd& matrix, const ElimResult& result, const std::vector<std::string>& originalVars)
 {
   int n = matrix.cols() - 1;
@@ -197,10 +205,9 @@ bool gaussElimComparison(const Eigen::MatrixXd& matrix, const ElimResult& result
     solutionMap[result.variables[idx]] = result.solution(idx);
   }
 
-  const double tol = 1e-9;
   for (int idx = 0; idx < n; ++idx)
   {
-    if (std::abs(solutionMap[originalVars[idx]] - eigenSolution(idx)) > tol)
+    if (std::abs(solutionMap[originalVars[idx]] - eigenSolution(idx)) > tolerance)
     {
       fmt::print("VERIFICATION FAILED: {}={} (expected {})\n",
                  originalVars[idx], solutionMap[originalVars[idx]], eigenSolution(idx));
