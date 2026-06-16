@@ -10,6 +10,19 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## [2026-06-16]
+
+### strang-linear-algebra/chapter_02.cpp
+
+#### Added
+Finalized both forward and backward elimination via:
+- `toRowEchelon()`
+  - `pivot()`
+  - `eliminate()`
+- `ReducedRowEchelon toReducedRowEchelon(const RowEchelon& ref)`
+
+---
+
 ## [2026-06-14]
 
 ### strang-linear-algebra/chapter_01.cpp
