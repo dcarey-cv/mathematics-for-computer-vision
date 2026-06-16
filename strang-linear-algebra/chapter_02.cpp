@@ -47,15 +47,16 @@ struct SystemOfEquations
 // Ux = c
 struct RowEchelon
 { 
-  MatrixXd UpperTriangularMatrix; // U
   MatrixXd LowerTriangularMatrix; // L
+  MatrixXd UpperTriangularMatrix; // U
   VectorXd ConstantVector; // c
+  bool IsPermuted = false;
   vector<Index> RowOrder; // Tracks row exchanges
   vector<Index> PivotCols;
   unsigned int Rank;
 };
 RowEchelon toRowEchelon(const SystemOfEquations& sys);
-bool pivot(MatrixXd& matrix, vector<Index>& rowOrder, Index col, Index pivotRow, double epsilon, MatrixXd& L);
+bool pivot(MatrixXd& matrix, vector<Index>& rowOrder, Index col, Index pivotRow, double epsilon, MatrixXd& L, bool& isPermuted);
 void eliminate(MatrixXd& matrix, Index col, Index pivotRow, MatrixXd& L);
 
 // Rx = d
@@ -75,15 +76,23 @@ ReducedRowEchelon toReducedRowEchelon(const RowEchelon& ref);
 //     - Extract Nullspace solution vectors and particular solutions
 int main()
 {
+/* Page 94: Another Worked Example
   MatrixXd A(3, 4); // SYSTEM OF EQUATIONS
   A << 1, 2, 3, 5,  // 1x1 + 2x2 + 3x3 + 5x4 = b1;
        2, 4, 8, 12, // 2x1 + 4x2 + 8x3 + 12x4 = b2;
        3, 6, 7, 13; // 3x1 + 6x2 + 7x3 + 13x4 = b3;
-
   vector<string> vars{"x1", "x2", "x3", "x4"};
+  VectorXd b(3); b << 0, 6, -6;  // b1, b2, b3
+*/
 
-  VectorXd b(3);
-  b << 0, 6, -6;  // b1, b2, b3
+///* Problem Set 2.2: 2A
+  MatrixXd A(2, 4);
+  A << 0, 1, 0, 3,
+       0, 2, 0, 6;
+  vector<string> vars{"a", "b", "c", "d"};
+  VectorXd b(2); b << 0, 0;  // b1, b2
+//*/
+
 
   SystemOfEquations sys(A, vars, b);
   print("\n\nA =\n{}\n\nx =\n", streamed(sys.CoefficientMatrix.format(eigFmt)));
@@ -92,15 +101,18 @@ int main()
 
   RowEchelon ref = toRowEchelon(sys);
   sys.Rank = ref.Rank;
-  if(sys.Rank < sys.SolutionVector.size()) { print("\nThe coefficient matrix is rank-deficient.\n"); }
+  if (sys.Rank < sys.SolutionVector.size()) { print("\nThe coefficient matrix is rank-deficient.\n"); }
   print("The pivot columns are {}.\n", ref.PivotCols);
-  print("Row ordering post-permutation:\n");
-  for (Index idx = 0; idx < static_cast<Index>(ref.RowOrder.size()); ++idx)
+  if (ref.IsPermuted)
   {
-    print("[row {}] {} [row {}]\n",
-      idx,
-      (idx == static_cast<Index>(ref.RowOrder.size() / 2)) ? "->" : "  ",
-      ref.RowOrder[idx]);
+    print("Row ordering post-permutation:\n");
+    for (Index idx = 0; idx < static_cast<Index>(ref.RowOrder.size()); ++idx)
+    {
+      print("[row {}] {} [row {}]\n",
+        idx,
+        (idx == static_cast<Index>(ref.RowOrder.size() / 2)) ? "->" : "  ",
+        ref.RowOrder[idx]);
+    }
   }
   print("\nU =\n{}\n\nc =\n{}\n\nL =\n{}\n",
     streamed(ref.UpperTriangularMatrix.format(eigFmt)),
@@ -124,6 +136,7 @@ RowEchelon toRowEchelon(const SystemOfEquations& sys)
   Index m = sys.CoefficientMatrix.rows();
   Index n = sys.CoefficientMatrix.cols();
   double epsilon = tolerance * sys.CoefficientMatrix.cwiseAbs().maxCoeff();
+    // Relative epsilon based on largest coefficient
 
   MatrixXd matrix(m, n + 1);
   matrix << sys.CoefficientMatrix, sys.ConstantVector;
@@ -136,7 +149,7 @@ RowEchelon toRowEchelon(const SystemOfEquations& sys)
   Index pivotRow = 0;
   for (Index col = 0; col < n; ++col)
   {
-    if (!pivot(matrix, ref.RowOrder, col, pivotRow, epsilon, L)) { continue; }
+    if (!pivot(matrix, ref.RowOrder, col, pivotRow, epsilon, L, ref.IsPermuted)) { continue; }
     ref.PivotCols.push_back(col);
     eliminate(matrix, col, pivotRow++, L);
   }
@@ -153,20 +166,20 @@ RowEchelon toRowEchelon(const SystemOfEquations& sys)
   return ref; // `ref` stands for "Row Echelon Form"
 }
 
-bool pivot(MatrixXd& matrix, vector<Index>& rowOrder, Index col, Index pivotRow, double epsilon, MatrixXd& L)
+bool pivot(MatrixXd& matrix, vector<Index>& rowOrder, Index col, Index pivotRow, double epsilon, MatrixXd& L, bool& isPermuted)
 {
   Index maxRow = pivotRow;
   for (Index idx = maxRow + 1; idx < matrix.rows(); ++idx)
   {
-    if (abs(matrix(idx, col)) < abs(matrix(maxRow, col))) { continue; }
+    if (abs(matrix(idx, col)) <= abs(matrix(maxRow, col))) { continue; }
     else { maxRow = idx; }
   }
 
-  // Relative epsilon based on largest coefficient
   if (abs(matrix(maxRow, col)) < epsilon) { return false; }
 
   if (maxRow != pivotRow)
   {
+    isPermuted = true;
     matrix.row(pivotRow).swap(matrix.row(maxRow));
     L.block(pivotRow, 0, 1, pivotRow).swap(L.block(maxRow, 0, 1, pivotRow));
     std::swap(rowOrder[pivotRow], rowOrder[maxRow]);
