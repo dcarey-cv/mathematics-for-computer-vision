@@ -12,7 +12,6 @@ ELIMINATION AND VECTOR SPACES
 #include <fmt/ranges.h>
 
 #include <string>
-#include <unordered_map>
 #include <vector>
 #include <stdexcept>
 #include <numeric>
@@ -23,6 +22,12 @@ using fmt::print, fmt::streamed,
 
 Eigen::IOFormat eigFmt(Eigen::StreamPrecision, 0, ", ", "\n", "[", "]", "", "", ' ');
 
+template<typename Derived>
+void threshold(Eigen::MatrixBase<Derived>& mat, double epsilon)
+{
+  mat = (mat.array().abs() < epsilon).select(0.0, mat);
+}
+
 // Ax = b
 constexpr double tolerance = 1e-10;
 struct SystemOfEquations
@@ -30,10 +35,11 @@ struct SystemOfEquations
   MatrixXd CoefficientMatrix; // A
   vector<string> SolutionVector; // x
   VectorXd ConstantVector; // b
-  unsigned int Rank; // r
+  double Epsilon; 
 
   SystemOfEquations(const MatrixXd& A, const vector<string>& vars, const VectorXd& b)
-    : CoefficientMatrix(A), SolutionVector(vars), ConstantVector(b)
+    : CoefficientMatrix(A), SolutionVector(vars), ConstantVector(b),
+      Epsilon(tolerance * A.cwiseAbs().maxCoeff())
   {
     if (A.cols() != static_cast<Index>(vars.size()))
       // *.cols() returns Eigen::Index (signed ptrdiff_t),
@@ -47,25 +53,30 @@ struct SystemOfEquations
 // Ux = c
 struct RowEchelon
 { 
-  MatrixXd LowerTriangularMatrix; // L
   MatrixXd UpperTriangularMatrix; // U
   VectorXd ConstantVector; // c
-  bool IsPermuted = false;
+  MatrixXd LowerTriangularMatrix; // L
   vector<Index> RowOrder; // Tracks row exchanges
   vector<Index> PivotCols;
+  MatrixXd ColumnSpace; // C(A)
+  vector<Index> FreeCols;
   unsigned int Rank;
 };
 RowEchelon toRowEchelon(const SystemOfEquations& sys);
-bool pivot(MatrixXd& matrix, vector<Index>& rowOrder, Index col, Index pivotRow, double epsilon, MatrixXd& L, bool& isPermuted);
+bool pivot(MatrixXd& matrix, vector<Index>& rowOrder, Index col, Index pivotRow, double epsilon, MatrixXd& L);
 void eliminate(MatrixXd& matrix, Index col, Index pivotRow, MatrixXd& L);
+void buildColumnSpace(const SystemOfEquations& sys, RowEchelon& ref, double epsilon);
 
 // Rx = d
 struct ReducedRowEchelon
 { 
   MatrixXd ReducedMatrix; // R
   VectorXd ConstantVector;  // d
+  MatrixXd RowSpace; // C(A^T) = C(U^T) = C(R^T)
+  MatrixXd Kernel; // N(A)
 };
-ReducedRowEchelon toReducedRowEchelon(const RowEchelon& ref);
+ReducedRowEchelon toReducedRowEchelon(const RowEchelon& ref, double epsilon);
+void buildKernel(const RowEchelon& ref, ReducedRowEchelon& rref, double epsilon);
 
 
 // OBJECTIVES:
@@ -85,12 +96,13 @@ int main()
   VectorXd b(3); b << 0, 6, -6;  // b1, b2, b3
 */
 
-///* Problem Set 2.2: 2A
-  MatrixXd A(2, 4);
-  A << 0, 1, 0, 3,
-       0, 2, 0, 6;
+///* Page 117: Basic Example
+  MatrixXd A(3, 4);
+  A <<  1,  3,  3,  2,
+        2,  6,  9,  7,
+       -1, -3,  3,  4;
   vector<string> vars{"a", "b", "c", "d"};
-  VectorXd b(2); b << 0, 0;  // b1, b2
+  VectorXd b(3); b << 0, 0, 0;  // b1, b2
 //*/
 
 
@@ -100,34 +112,36 @@ int main()
   print("\nb =\n{}\n", streamed(sys.ConstantVector.format(eigFmt)));
 
   RowEchelon ref = toRowEchelon(sys);
-  sys.Rank = ref.Rank;
-  if (sys.Rank < sys.SolutionVector.size()) { print("\nThe coefficient matrix is rank-deficient.\n"); }
+  if (!ref.FreeCols.empty()) { print("\nThe coefficient matrix is rank-deficient.\n"); }
   print("The pivot columns are {}.\n", ref.PivotCols);
-  if (ref.IsPermuted)
+  if (std::any_of(ref.RowOrder.begin(), ref.RowOrder.end(), [i = Index(0)](Index j) mutable {return j != i++;}))
   {
     print("Row ordering post-permutation:\n");
+    Index middleRow = static_cast<Index>(ref.RowOrder.size() / 2);
     for (Index idx = 0; idx < static_cast<Index>(ref.RowOrder.size()); ++idx)
     {
       print("[row {}] {} [row {}]\n",
         idx,
-        (idx == static_cast<Index>(ref.RowOrder.size() / 2)) ? "->" : "  ",
+        (idx == middleRow) ? "->" : "  ",
         ref.RowOrder[idx]);
     }
   }
-  print("\nU =\n{}\n\nc =\n{}\n\nL =\n{}\n",
+  buildColumnSpace(sys, ref, sys.Epsilon);
+  print("\nU =\n{}\n\nc =\n{}\n\nL =\n{}\n\nC(A) =\n{}\n",
     streamed(ref.UpperTriangularMatrix.format(eigFmt)),
     streamed(ref.ConstantVector.format(eigFmt)),
-    streamed(ref.LowerTriangularMatrix.format(eigFmt)));
+    streamed(ref.LowerTriangularMatrix.format(eigFmt)),
+    streamed(ref.ColumnSpace.format(eigFmt)));
 
-  ReducedRowEchelon rref = toReducedRowEchelon(ref);
-  print("\nR =\n{}\n\nd =\n{}\n\n",
+  ReducedRowEchelon rref = toReducedRowEchelon(ref, sys.Epsilon);
+  print("\nR =\n{}\n\nd =\n{}\n\nC(A') =\n{}\n\nN(A) =\n{}\n",
     streamed(rref.ReducedMatrix.format(eigFmt)),
-    streamed(rref.ConstantVector.format(eigFmt)));
+    streamed(rref.ConstantVector.format(eigFmt)),
+    streamed(rref.RowSpace.format(eigFmt)),
+    streamed(rref.Kernel.format(eigFmt)));
 
   return 0;
 }
-
-
 
 RowEchelon toRowEchelon(const SystemOfEquations& sys)
 {
@@ -135,8 +149,6 @@ RowEchelon toRowEchelon(const SystemOfEquations& sys)
 
   Index m = sys.CoefficientMatrix.rows();
   Index n = sys.CoefficientMatrix.cols();
-  double epsilon = tolerance * sys.CoefficientMatrix.cwiseAbs().maxCoeff();
-    // Relative epsilon based on largest coefficient
 
   MatrixXd matrix(m, n + 1);
   matrix << sys.CoefficientMatrix, sys.ConstantVector;
@@ -149,8 +161,14 @@ RowEchelon toRowEchelon(const SystemOfEquations& sys)
   Index pivotRow = 0;
   for (Index col = 0; col < n; ++col)
   {
-    if (!pivot(matrix, ref.RowOrder, col, pivotRow, epsilon, L, ref.IsPermuted)) { continue; }
-    ref.PivotCols.push_back(col);
+    if (pivot(matrix, ref.RowOrder, col, pivotRow, sys.Epsilon, L))
+    {
+      ref.PivotCols.push_back(col);
+    } else {
+      ref.FreeCols.push_back(col);
+      continue;
+    }
+    
     eliminate(matrix, col, pivotRow++, L);
   }
 
@@ -160,13 +178,13 @@ RowEchelon toRowEchelon(const SystemOfEquations& sys)
   ref.ConstantVector = matrix.col(n); // c
 
   // Thresholding as per the established epsilon
-  ref.UpperTriangularMatrix = (ref.UpperTriangularMatrix.array().abs() < epsilon).select(0.0, ref.UpperTriangularMatrix);
-  ref.ConstantVector = (ref.ConstantVector.array().abs() < epsilon).select(0.0, ref.ConstantVector);
+  threshold(ref.UpperTriangularMatrix, sys.Epsilon);
+  threshold(ref.ConstantVector, sys.Epsilon);
 
   return ref; // `ref` stands for "Row Echelon Form"
 }
 
-bool pivot(MatrixXd& matrix, vector<Index>& rowOrder, Index col, Index pivotRow, double epsilon, MatrixXd& L, bool& isPermuted)
+bool pivot(MatrixXd& matrix, vector<Index>& rowOrder, Index col, Index pivotRow, double epsilon, MatrixXd& L)
 {
   Index maxRow = pivotRow;
   for (Index idx = maxRow + 1; idx < matrix.rows(); ++idx)
@@ -179,7 +197,6 @@ bool pivot(MatrixXd& matrix, vector<Index>& rowOrder, Index col, Index pivotRow,
 
   if (maxRow != pivotRow)
   {
-    isPermuted = true;
     matrix.row(pivotRow).swap(matrix.row(maxRow));
     L.block(pivotRow, 0, 1, pivotRow).swap(L.block(maxRow, 0, 1, pivotRow));
     std::swap(rowOrder[pivotRow], rowOrder[maxRow]);
@@ -198,15 +215,23 @@ void eliminate(MatrixXd& matrix, Index col, Index pivotRow, MatrixXd& L)
   }
 }
 
+void buildColumnSpace(const SystemOfEquations& sys, RowEchelon& ref, double epsilon)
+{
+  Index m = sys.CoefficientMatrix.rows();
+  Index r = static_cast<Index>(ref.Rank);
 
+  ref.ColumnSpace = MatrixXd::Zero(m, r);
+  for (Index idx = 0; idx < r; ++idx) { ref.ColumnSpace.col(idx) = sys.CoefficientMatrix.col(ref.PivotCols[idx]); }
 
-ReducedRowEchelon toReducedRowEchelon(const RowEchelon& ref)
+  threshold(ref.ColumnSpace, epsilon);
+}
+
+ReducedRowEchelon toReducedRowEchelon(const RowEchelon& ref, double epsilon)
 {
   ReducedRowEchelon rref;
   
   Index m = ref.UpperTriangularMatrix.rows();
   Index n = ref.UpperTriangularMatrix.cols();
-  double epsilon = tolerance * ref.UpperTriangularMatrix.cwiseAbs().maxCoeff();
 
   MatrixXd matrix(m, n + 1);
   matrix << ref.UpperTriangularMatrix, ref.ConstantVector;
@@ -224,8 +249,28 @@ ReducedRowEchelon toReducedRowEchelon(const RowEchelon& ref)
   rref.ReducedMatrix = matrix.leftCols(n);
   rref.ConstantVector = matrix.col(n);
 
-  rref.ReducedMatrix = (rref.ReducedMatrix.array().abs() < epsilon).select(0.0, rref.ReducedMatrix);
-  rref.ConstantVector = (rref.ConstantVector.array().abs() < epsilon).select(0.0, rref.ConstantVector);
+  threshold(rref.ReducedMatrix, epsilon);
+  threshold(rref.ConstantVector, epsilon);
+
+  rref.RowSpace = MatrixXd::Zero(n, ref.Rank);
+  for(Index idx = 0; idx < ref.Rank; ++idx) { rref.RowSpace.col(idx) = rref.ReducedMatrix.row(idx).transpose(); }
+  buildKernel(ref, rref, epsilon);
 
   return rref; // `rref` stands for "Reduced Row Echelon Form"
+}
+
+void buildKernel(const RowEchelon& ref, ReducedRowEchelon& rref, double epsilon)
+{
+  rref.Kernel = MatrixXd::Zero(rref.ReducedMatrix.cols(), static_cast<Index>(ref.FreeCols.size()));
+  for (Index i = 0; i < static_cast<Index>(ref.FreeCols.size()); ++i)
+  {
+    Index freeCol = ref.FreeCols[i];
+    rref.Kernel(freeCol, i) = 1.0;
+    for (Index j = 0; j < static_cast<Index>(ref.PivotCols.size()); ++j)
+    {
+      rref.Kernel(ref.PivotCols[j], i) = -rref.ReducedMatrix(j, freeCol);
+    }
+  }
+
+  threshold(rref.Kernel, epsilon);
 }
