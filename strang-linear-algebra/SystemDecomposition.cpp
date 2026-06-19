@@ -35,7 +35,7 @@ struct SystemOfEquations
   MatrixXd CoefficientMatrix; // A
   vector<string> SolutionVector; // x
   VectorXd ConstantVector; // b
-  double Epsilon; 
+  double Epsilon;
 
   SystemOfEquations(const MatrixXd& A, const vector<string>& vars, const VectorXd& b)
     : CoefficientMatrix(A), SolutionVector(vars), ConstantVector(b),
@@ -96,13 +96,24 @@ int main()
   VectorXd b(3); b << 0, 6, -6;  // b1, b2, b3
 */
 
-///* Page 117: Basic Example
+/* Page 117: Basic Example
   MatrixXd A(3, 4);
   A <<  1,  3,  3,  2,
         2,  6,  9,  7,
        -1, -3,  3,  4;
   vector<string> vars{"a", "b", "c", "d"};
-  VectorXd b(3); b << 0, 0, 0;  // b1, b2
+  VectorXd b(3); b << 0, 0, 0;
+*/
+
+///* Page 129: Network Theory
+  MatrixXd A(5, 4);
+  A << -1,  1,  0,  0,
+       -1,  0,  1,  0,
+        0, -1,  1,  0,
+        0, -1,  0,  1,
+        0,  0, -1,  1;
+  vector<string> vars{"a", "b", "c", "d"};
+  VectorXd b(5); b << 0, 0, 0, 0, 0;
 //*/
 
 
