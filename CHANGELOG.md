@@ -10,6 +10,20 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## [2026-06-19]
+
+### strang-linear-algebra/chapter_02.cpp
+
+#### Added
+- `void buildColumnSpace()`
+  - `MatrixXd ColumnSpace; // C(A)`
+  - `vector<Index> FreeCols;`
+- `void buildKernel()`
+  - `MatrixXd RowSpace; // C(A^T) = C(U^T) = C(R^T)`
+  - `MatrixXd Kernel; // N(A)`
+
+---
+
 ## [2026-06-16]
 
 ### strang-linear-algebra/chapter_02.cpp
