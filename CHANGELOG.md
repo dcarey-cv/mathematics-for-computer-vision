@@ -24,6 +24,20 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## [2026-06-19]
+
+### strang-linear-algebra/GaussianElimination.cpp [formerly: /chapter_01.cpp]
+
+#### Changed
+Renamed from `\chapter_01.cpp` to `GaussianElimination.cpp`
+
+### strang-linear-algebra/SystemDecomposition.cpp [formerly: /chapter_02.cpp]
+
+#### Changed
+Renamed from `\chapter_02.cpp` to `SystemDecomposition.cpp`
+
+---
+
 ## [2026-06-16]
 
 ### strang-linear-algebra/chapter_02.cpp
