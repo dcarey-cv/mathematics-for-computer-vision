@@ -3,7 +3,7 @@ target_link_libraries(strang_deps INTERFACE Eigen3::Eigen)
 target_link_libraries(strang_deps INTERFACE fmt::fmt)
 
 add_library(strang_viz_deps INTERFACE)
-target_link_libraries(strang_viz_deps INTERFACE Eigen3::Eigen pango_display pango_opengl pango_vars pango_windowing)
+target_link_libraries(strang_viz_deps INTERFACE Eigen3::Eigen pango_display pango_opengl pango_vars pango_windowing pango_plot pango_image pango_video)
 
 if(STRICT_WARNINGS)
   target_compile_options(strang_deps INTERFACE -Wall -Wextra -Werror -Wpedantic)
