@@ -44,12 +44,17 @@ mathematics-for-computer-vision/
 ├── .github/
 │   ├── ISSUE_TEMPLATE/
 │   └── PULL_REQUEST_TEMPLATE.md
+├── strang-linear-algebra/
+│   ├── CMakeLists.txt
+│   ├── GaussianElimination.cpp
+│   ├── SystemDecomposition.cpp
+│   └── chapter_03.cpp
 ├── CHANGELOG.md
+├── CMakeLists.txt
+├── CMakePresets.json
 ├── CONTRIBUTING.md
 └── README.md
 ```
-
-Subdirectories will be added as work on each topic begins.
 
 ---
 
